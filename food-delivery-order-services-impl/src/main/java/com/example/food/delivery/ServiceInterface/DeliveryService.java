@@ -11,5 +11,4 @@ public interface DeliveryService {
     ResponseEntity<BaseResponse<?>> getDeliveryByDelAgent(String delAgentEmail, int page);
     ResponseEntity<BaseResponse<?>> updateDeliveryStatus(UpdateDeliveryRequest updateDeliveryRequest);
 
-
 }

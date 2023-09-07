@@ -4,6 +4,7 @@ import com.example.food.delivery.Enums.OrderStatus;
 import com.example.food.delivery.Request.*;
 import com.example.food.delivery.Response.*;
 import com.example.food.delivery.ServiceInterface.DeliveryService;
+import com.example.food.delivery.ServiceInterface.RestaurantFeignInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,9 @@ import static com.example.food.delivery.Enums.OrderStatus.PENDING;
 public class DeliveryServiceImpl implements DeliveryService {
     @Autowired
     private DeliveryRepository deliveryRepository;
+
+    @Autowired
+    private RestaurantFeignInterface restaurantInterface;
 
     @Autowired
     private SequenceGeneratorService sequenceGeneratorService;
@@ -128,11 +132,23 @@ public class DeliveryServiceImpl implements DeliveryService {
             order.setOrderStatus(OrderStatus.COMPLETED);
             orderRepository.save(order);
             setRestAndDelAgentAvailability(delivery.getDeliveryPersonId());
+            for (OrderItem orderItem : order.getOrderItem()) {
+                createRating((int)delivery.getOrderId(), orderItem.getMenuItemId(), order.getCartId());
+            }
             response = new BaseResponse<>(true, ResponseStatus.SUCCESS.getStatus(), null, "Item Delivered Successfully");
         } catch(Exception e) {
             response = new BaseResponse<>(false, ResponseStatus.ERROR.getStatus(), e.getMessage(), null);
         }
         return ResponseEntity.ok(response);
+    }
+
+    public void createRating(int orderId, int menuItemId, String customerEmail) {
+        RatingRequest ratingRequest = RatingRequest.builder()
+                .orderId(orderId)
+                .menuItemId(menuItemId)
+                .customerEmail(customerEmail)
+                .build();
+        restaurantInterface.createRating(ratingRequest);
     }
 
     public void setRestAndDelAgentAvailability(String delAgentEmail) {

@@ -106,7 +106,7 @@ public class CartServiceImpl implements CartService {
     }
 
     public CustomerAddressResponse getCustomerDetail(String cartId, int addressId) {
-        String custAddressUrl = "http://localhost:8081/user-service/customerAddress/getAddressDetail?customerEmail=" + cartId + "&addressId=" + addressId;
+        String custAddressUrl = "http://localhost:8081/user-service/customerAddress/addressDetail?customerEmail=" + cartId + "&addressId=" + addressId;
         BaseResponse<CustomerAddressResponse> getCustomerAddress;
         ResponseEntity<BaseResponse<CustomerAddressResponse>> responseEntity1 =
                 restTemplate.exchange(custAddressUrl, HttpMethod.GET, null,

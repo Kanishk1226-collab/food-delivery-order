@@ -1,5 +1,7 @@
 package com.example.food.delivery;
 
+import com.example.food.delivery.Enums.OrderStatus;
+import com.example.food.delivery.Request.OrderFilter;
 import com.example.food.delivery.Request.OrderItemRequest;
 import com.example.food.delivery.Request.OrderRequest;
 import com.example.food.delivery.Request.UpdatePaymentRequest;
@@ -11,6 +13,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -59,6 +63,33 @@ public class OrderServiceImpl implements OrderService {
             }
             return ResponseEntity.ok(response);
         }
+
+    public synchronized ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(int page, OrderFilter orderFilter) {
+        try {
+            isValidEmail(orderFilter.getCartId());
+            int pageSize = 10;
+            PageRequest pageRequest = PageRequest.of(page, pageSize);
+            Page<Order> pageOrder = orderRepository.findByCartIdAndOrderStatusOrderByIdDesc(orderFilter.getCartId(), orderFilter.getOrderStatus(), pageRequest);
+            List<Order> orders = pageOrder.getContent();
+            response = new BaseResponse<>(true, ResponseStatus.SUCCESS.getStatus(), null, orders);
+        } catch (Exception e) {
+            response = new BaseResponse<>(false, ResponseStatus.ERROR.getStatus(), e.getMessage(), null);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    public synchronized ResponseEntity<BaseResponse<?>> getFilteredOrders(int page, OrderStatus orderStatus) {
+        try {
+            int pageSize = 10;
+            PageRequest pageRequest = PageRequest.of(page, pageSize);
+            Page<Order> pageOrder = orderRepository.findByOrderStatusOrderByIdDesc(orderStatus, pageRequest);
+            List<Order> orders = pageOrder.getContent();
+            response = new BaseResponse<>(true, ResponseStatus.SUCCESS.getStatus(), null, orders);
+        } catch (Exception e) {
+            response = new BaseResponse<>(false, ResponseStatus.ERROR.getStatus(), e.getMessage(), null);
+        }
+        return ResponseEntity.ok(response);
+    }
 
     public synchronized ResponseEntity<BaseResponse<?>> updatePaymentStatus(UpdatePaymentRequest updatePaymentRequest) {
         try {
