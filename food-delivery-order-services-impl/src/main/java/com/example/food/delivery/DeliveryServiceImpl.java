@@ -5,6 +5,7 @@ import com.example.food.delivery.Request.*;
 import com.example.food.delivery.Response.*;
 import com.example.food.delivery.ServiceInterface.DeliveryService;
 import com.example.food.delivery.ServiceInterface.RestaurantFeignInterface;
+import com.example.food.delivery.ServiceInterface.UserFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,9 @@ public class DeliveryServiceImpl implements DeliveryService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private UserFeignClient userFeignClient;
+
     public synchronized ResponseEntity<BaseResponse<?>> createDelivery(DeliveryRequest deliveryRequest) {
         try {
             Delivery delivery = new Delivery();
@@ -53,6 +57,7 @@ public class DeliveryServiceImpl implements DeliveryService {
             delivery.setOrderId(deliveryRequest.getOrderId());
             delivery.setDeliveryPersonId(deliveryRequest.getDeliveryPersonId());
             delivery.setIsDelivered(false);
+            delivery.setOtp(null);
             deliveryRepository.save(delivery);
             response = new BaseResponse<>(true, ResponseStatus.SUCCESS.getStatus(), null, "Delivery Created Successfully");
         } catch (Exception e) {
@@ -72,7 +77,6 @@ public class DeliveryServiceImpl implements DeliveryService {
 
     public synchronized ResponseEntity<BaseResponse<?>> getDeliveryByDelAgent(String delAgentEmail, int page) {
         try {
-            isValidEmail(delAgentEmail);
             int pageSize = 10;
             PageRequest pageRequest = PageRequest.of(page, pageSize);
             Page<Delivery> pageDelivery = deliveryRepository.findByDeliveryPersonIdOrderByIdDesc(delAgentEmail, pageRequest);
@@ -116,25 +120,30 @@ public class DeliveryServiceImpl implements DeliveryService {
         return ResponseEntity.ok(response);
     }
 
-    public synchronized ResponseEntity<BaseResponse<?>> updateDeliveryStatus(UpdateDeliveryRequest updateDeliveryRequest) {
+    public synchronized ResponseEntity<BaseResponse<?>> updateDeliveryStatus(int deliveryId, String otp, String delAgentEmail) {
         try {
-            Optional<Delivery> optionalDelivery = deliveryRepository.findById(updateDeliveryRequest.getDeliveryId());
-            if(optionalDelivery.isEmpty()) {
-                throw new OrderManagementExceptions.DeliveryNotFound("Delivery with Id " + updateDeliveryRequest.getDeliveryId() + " not found");
+            Delivery delivery = deliveryRepository.findById(deliveryId);
+            if(delivery == null) {
+                throw new OrderManagementExceptions.DeliveryNotFound("Delivery with Id " + deliveryId + " not found");
             }
-            Delivery delivery = optionalDelivery.get();
-            if(!Objects.equals(delivery.getDeliveryPersonId(), updateDeliveryRequest.getDeliveryPersonId())) {
+            if(delivery.getIsDelivered()) {
+                throw new OrderManagementExceptions.InvalidInputException("Order already delivered!");
+            }
+            if(!Objects.equals(delivery.getDeliveryPersonId(), delAgentEmail)) {
                 throw new OrderManagementExceptions.DeliveryNotFound("Delivery with this user Id not found");
+            }
+            if(!otp.equals(delivery.getOtp())) {
+                throw new OrderManagementExceptions.InvalidInputException("OTP doesn't match, please provide valid OTP!");
             }
             delivery.setIsDelivered(true);
             deliveryRepository.save(delivery);
             Order order = orderRepository.findById(delivery.getOrderId());
             order.setOrderStatus(OrderStatus.COMPLETED);
-            orderRepository.save(order);
-            setRestAndDelAgentAvailability(delivery.getDeliveryPersonId());
+            setDeliveryAgentStatus(delivery.getDeliveryPersonId());
             for (OrderItem orderItem : order.getOrderItem()) {
                 createRating((int)delivery.getOrderId(), orderItem.getMenuItemId(), order.getCartId());
             }
+            orderRepository.save(order);
             response = new BaseResponse<>(true, ResponseStatus.SUCCESS.getStatus(), null, "Item Delivered Successfully");
         } catch(Exception e) {
             response = new BaseResponse<>(false, ResponseStatus.ERROR.getStatus(), e.getMessage(), null);
@@ -152,7 +161,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     }
 
     public void setRestAndDelAgentAvailability(String delAgentEmail) {
-        String url = "http://localhost:8081/user-service/deliveryAgent/setDelAgentAvailability?delAgentEmail=" + delAgentEmail;
+        String url = "http://localhost:8081/user-service/delAgent/update/status?delAgentEmail=" + delAgentEmail;
         BaseResponse<?> getDelAgentAvail;
         ResponseEntity<BaseResponse<?>> responseEntity =
                 restTemplate.exchange(url, HttpMethod.PUT, null,
@@ -162,6 +171,17 @@ public class DeliveryServiceImpl implements DeliveryService {
             if (!getDelAgentAvail.isSuccess()) {
                 throw new OrderManagementExceptions.RestTemplateException(getDelAgentAvail.getError());
             }
+        }
+    }
+
+    public void setDeliveryAgentStatus(String deliveryAgentEmail) {
+        ResponseEntity<BaseResponse<?>> responseEntity = userFeignClient.setAvailability(
+                "AVAILABLE", deliveryAgentEmail, "DELIVERY_AGENT"
+        );
+        BaseResponse<?> baseResponse = responseEntity.getBody();
+        if (!baseResponse.isSuccess()) {
+            String error = baseResponse != null ? baseResponse.getError() : "Unknown error";
+            throw new OrderManagementExceptions.RestTemplateException(error);
         }
     }
 

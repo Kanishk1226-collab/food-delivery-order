@@ -45,6 +45,7 @@ public class CollectionConstants {
     public static final String DELIVERY_ID = "delivery_id";
     public static final String DELIVERY_PERSON_ID = "delivery_person_id";
     public static final String IS_DELIVERED = "is_delivered";
+    public static final String DELIVERY_OTP = "otp";
 
     //RESTAURANT DETAIL LIST
     public static final String REST_DETAIL_LIST = "restaurantDetail";

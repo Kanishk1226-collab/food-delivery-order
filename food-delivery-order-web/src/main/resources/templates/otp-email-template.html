@@ -1,0 +1,24 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.w3.org/1999/xhtml">-->
+<!--<head>-->
+<!--    <title>Email Template</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--<h1>Greetings from myproject!</h1>-->
+<!--<p th:text="${message}">Default message</p>-->
+<!--</body>-->
+<!--</html>-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <title>One-Time Password (OTP) Email</title>
+</head>
+<body>
+<h1>One-Time Password (OTP) for Verification</h1>
+<p>Dear User,</p>
+<p>Your One-Time Password (OTP) for Delivery verification is:</p>
+<p style="font-size: 24px; font-weight: bold;" th:text="${orderEntry.orderId}">1234</p>
+<p>Please provide this OTP to our Delivery Agent to confirm your Order.</p>
+<p>Thank you for using our services!</p>
+</body>
+</html>

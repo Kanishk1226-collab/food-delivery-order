@@ -52,7 +52,6 @@ public class OrderServiceImpl implements OrderService {
 
     public synchronized ResponseEntity<BaseResponse<?>> getOrdersByCustId(int page, String customerEmail) {
             try {
-                isValidEmail(customerEmail);
                 int pageSize = 10;
                 PageRequest pageRequest = PageRequest.of(page, pageSize);
                 Page<Order> pageOrder = orderRepository.findByCartIdOrderByIdDesc(customerEmail, pageRequest);
@@ -64,12 +63,11 @@ public class OrderServiceImpl implements OrderService {
             return ResponseEntity.ok(response);
         }
 
-    public synchronized ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(int page, OrderFilter orderFilter) {
+    public synchronized ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(int page, OrderStatus orderStatus, String custEmail) {
         try {
-            isValidEmail(orderFilter.getCartId());
             int pageSize = 10;
             PageRequest pageRequest = PageRequest.of(page, pageSize);
-            Page<Order> pageOrder = orderRepository.findByCartIdAndOrderStatusOrderByIdDesc(orderFilter.getCartId(), orderFilter.getOrderStatus(), pageRequest);
+            Page<Order> pageOrder = orderRepository.findByCartIdAndOrderStatusOrderByIdDesc(custEmail, orderStatus, pageRequest);
             List<Order> orders = pageOrder.getContent();
             response = new BaseResponse<>(true, ResponseStatus.SUCCESS.getStatus(), null, orders);
         } catch (Exception e) {

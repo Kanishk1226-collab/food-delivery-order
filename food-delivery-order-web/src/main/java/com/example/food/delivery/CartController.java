@@ -9,6 +9,7 @@ import com.example.food.delivery.ServiceInterface.CartService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,32 +18,35 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
-    @PostMapping(value = "/createCart")
+    @PostMapping(value = "/create")
     public ResponseEntity<BaseResponse<?>> createCart(@Valid @RequestBody CartRequest cartRequest){
         return cartService.createCart(cartRequest);
     }
 
-    @GetMapping(value = "/getCart")
+    @GetMapping(value = "/view")
     public ResponseEntity<BaseResponse<?>> getCart(@RequestParam String cartId){
-        return cartService.getCartId(cartId);
+        return cartService.getCart(cartId);
     }
 
-    @PutMapping("/updateCart")
+    @PutMapping("/add")
     public ResponseEntity<BaseResponse<?>> updateCart(@Valid @RequestBody UpdateCartRequest updateCartRequest) {
         return cartService.updateCart(updateCartRequest);
     }
 
-    @GetMapping("/checkoutCart")
-    public ResponseEntity<BaseResponse<?>> checkoutCart(@RequestParam String cartId, int addressId) {
-        return cartService.checkoutCart(cartId, addressId);
+    @GetMapping("/checkout")
+    @PreAuthorize("#userRole == 'CUSTOMER'")
+    public ResponseEntity<BaseResponse<?>> checkoutCart(int addressId,
+                                                        @RequestHeader("userEmail") String userEmail,
+                                                        @RequestHeader("userRole") String userRole) {
+        return cartService.checkoutCart(userEmail, addressId);
     }
 
-    @PutMapping("/clearCart")
+    @PutMapping("/clear")
     public ResponseEntity<BaseResponse<?>> clearCart(@RequestParam String cartId) {
         return cartService.clearCart(cartId);
     }
 
-    @DeleteMapping("/deleteCart")
+    @DeleteMapping("/delete")
     public ResponseEntity<BaseResponse<?>> deleteCustomer(@RequestParam String cartId) {
         return cartService.deleteCart(cartId);
     }

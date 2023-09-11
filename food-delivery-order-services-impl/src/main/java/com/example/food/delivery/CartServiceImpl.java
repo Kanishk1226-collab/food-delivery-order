@@ -4,6 +4,8 @@ import com.example.food.delivery.Enums.OrderStatus;
 import com.example.food.delivery.Request.*;
 import com.example.food.delivery.Response.*;
 import com.example.food.delivery.ServiceInterface.CartService;
+import com.example.food.delivery.ServiceInterface.UserFeignClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 
@@ -38,6 +40,12 @@ public class CartServiceImpl implements CartService {
     @Autowired
     public BaseResponse<?> response;
 
+    @Autowired
+    public UserFeignClient userFeignClient;
+
+    @Autowired
+    public ObjectMapper objectMapper;
+
     public synchronized ResponseEntity<BaseResponse<?>> createCart(CartRequest cartRequest) {
         try {
             Cart cart = new Cart();
@@ -54,7 +62,7 @@ public class CartServiceImpl implements CartService {
         return ResponseEntity.ok(response);
     }
 
-    public synchronized ResponseEntity<BaseResponse<?>> getCartId(String cartId) {
+    public synchronized ResponseEntity<BaseResponse<?>> getCart(String cartId) {
         try{
             if(!cartRepository.existsByCartId(cartId)) {
                 throw new OrderManagementExceptions.CartNotFound("Cart Id not found");
@@ -91,7 +99,7 @@ public class CartServiceImpl implements CartService {
 
     public void checkMenuAvailability(List<OrderItem> orderItemRes) {
         for (OrderItem orderItem : orderItemRes) {
-            String url = "http://localhost:8082/restaurant-service/menuItem/getMenuDetail?menuItemId=" + orderItem.getMenuItemId() + "&quantity=" + orderItem.getQuantity();
+            String url = "http://localhost:8082/restaurant-service/menuItem/menuDetail?menuItemId=" + orderItem.getMenuItemId() + "&quantity=" + orderItem.getQuantity();
             BaseResponse<CartResponse> getMenuDetail;
             ResponseEntity<BaseResponse<CartResponse>> responseEntity =
                     restTemplate.exchange(url, HttpMethod.GET, null,
@@ -106,23 +114,29 @@ public class CartServiceImpl implements CartService {
     }
 
     public CustomerAddressResponse getCustomerDetail(String cartId, int addressId) {
-        String custAddressUrl = "http://localhost:8081/user-service/customerAddress/addressDetail?customerEmail=" + cartId + "&addressId=" + addressId;
-        BaseResponse<CustomerAddressResponse> getCustomerAddress;
-        ResponseEntity<BaseResponse<CustomerAddressResponse>> responseEntity1 =
-                restTemplate.exchange(custAddressUrl, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<BaseResponse<CustomerAddressResponse>>() {});
-        if (responseEntity1.getStatusCode().is2xxSuccessful()) {
-            getCustomerAddress = responseEntity1.getBody();
-            if (!getCustomerAddress.isSuccess()) {
-                throw new OrderManagementExceptions.RestTemplateException(getCustomerAddress.getError());
+        ResponseEntity<BaseResponse<?>> responseEntity = userFeignClient.getAddressDetail(
+                addressId,
+                "CUSTOMER",
+                cartId
+        );
+        BaseResponse<?> baseResponse = responseEntity.getBody();
+
+        if (baseResponse != null && baseResponse.isSuccess()) {
+            Object data = baseResponse.getData();
+            try {
+                CustomerAddressResponse response = objectMapper.convertValue(data, CustomerAddressResponse.class);
+                return response;
+            } catch (IllegalArgumentException e) {
+                throw new OrderManagementExceptions.RestTemplateException("Failed to convert response data to CustomerAddressResponse");
             }
-            return getCustomerAddress.getData();
+        } else {
+            String error = baseResponse != null ? baseResponse.getError() : "Unknown error";
+            throw new OrderManagementExceptions.RestTemplateException(error);
         }
-        return null;
     }
 
     public RestaurantResponse getRestaurantDetail(Integer restaurantId) {
-        String restUrl = "http://localhost:8082/restaurant-service/restaurant/getRestById?restId=" + restaurantId;
+        String restUrl = "http://localhost:8082/restaurant-service/restaurant/id?restId=" + restaurantId;
         BaseResponse<RestaurantResponse> getRestResponse;
         ResponseEntity<BaseResponse<RestaurantResponse>> responseEntity2 =
                 restTemplate.exchange(restUrl, HttpMethod.GET, null,
@@ -138,9 +152,8 @@ public class CartServiceImpl implements CartService {
     }
 
     public DeliveryAgentResponse getDeliveryAgentDetail(String restAgentEmail) {
-        String delAgentUrl = "http://localhost:8081/user-service/deliveryAgent/assignDelivery?restaurantAgentEmail=" + restAgentEmail;
+        String delAgentUrl = "http://localhost:8081/user-service/assign/delAgent?restaurantAgentEmail=" + restAgentEmail;
         BaseResponse<DeliveryAgentResponse> getDelAgent;
-
         ResponseEntity<BaseResponse<DeliveryAgentResponse>> responseEntity3 =
                 restTemplate.exchange(delAgentUrl, HttpMethod.PUT, null,
                         new ParameterizedTypeReference<BaseResponse<DeliveryAgentResponse>>() {});
@@ -223,7 +236,10 @@ public class CartServiceImpl implements CartService {
             }
             int menuItemId = updateCartRequest.getMenuItemId();
             int quantity = updateCartRequest.getQuantity();
-            String url = "http://localhost:8082/restaurant-service/menuItem/getMenuDetail?menuItemId=" + menuItemId + "&quantity=" + quantity;
+            if(quantity < 1) {
+                throw new OrderManagementExceptions.InvalidInputException("Quantity should be greater than 0");
+            }
+            String url = "http://localhost:8082/restaurant-service/menuItem/menuDetail?menuItemId=" + menuItemId + "&quantity=" + quantity;
             BaseResponse<CartResponse> getMenuDetail;
             CartResponse cartResponse = new CartResponse();
             ResponseEntity<BaseResponse<CartResponse>> responseEntity =

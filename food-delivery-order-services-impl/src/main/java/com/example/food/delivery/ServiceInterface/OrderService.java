@@ -11,7 +11,7 @@ public interface OrderService {
     ResponseEntity<BaseResponse<?>> getAllOrders(int page);
     ResponseEntity<BaseResponse<?>> getOrdersByCustId(int page, String customerEmail);
     ResponseEntity<BaseResponse<?>> updatePaymentStatus(UpdatePaymentRequest updatePaymentRequest);
-    ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(int page, OrderFilter orderFilter);
+    ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(int page, OrderStatus orderStatus, String customerEmail);
     ResponseEntity<BaseResponse<?>> getFilteredOrders(int page, OrderStatus orderStatus);
 
 

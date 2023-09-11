@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 
 public interface CartService {
     ResponseEntity<BaseResponse<?>> createCart(CartRequest cartRequest);
-    ResponseEntity<BaseResponse<?>> getCartId(String cartId);
+    ResponseEntity<BaseResponse<?>> getCart(String cartId);
     ResponseEntity<BaseResponse<?>> checkoutCart(String cartId, int addressId);
     ResponseEntity<BaseResponse<?>> updateCart(UpdateCartRequest updateCartRequest);
     ResponseEntity<BaseResponse<?>> clearCart(String cartId);

@@ -35,4 +35,7 @@ public class Delivery {
     @NotNull(message = "Delivery Status should be provided")
     @Field(CollectionConstants.IS_DELIVERED)
     private Boolean isDelivered;
+
+    @Field(CollectionConstants.DELIVERY_OTP)
+    private String otp;
 }

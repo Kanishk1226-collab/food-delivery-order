@@ -9,6 +9,6 @@ public interface DeliveryService {
     ResponseEntity<BaseResponse<?>> createDelivery(DeliveryRequest deliveryRequest);
     ResponseEntity<BaseResponse<?>> getAllDelivery(int page);
     ResponseEntity<BaseResponse<?>> getDeliveryByDelAgent(String delAgentEmail, int page);
-    ResponseEntity<BaseResponse<?>> updateDeliveryStatus(UpdateDeliveryRequest updateDeliveryRequest);
+    ResponseEntity<BaseResponse<?>> updateDeliveryStatus(int deliveryId, String otp, String delAgentEmail);
 
 }

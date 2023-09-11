@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(value = "restaurant", url = "http://localhost:8082/restaurant-service/")
 public interface RestaurantFeignInterface {
-    @PostMapping(value = "createRating")
+    @PostMapping(value = "/rating/create")
      ResponseEntity<BaseResponse<?>> createRating(@Valid @RequestBody RatingRequest ratingRequest);
 }

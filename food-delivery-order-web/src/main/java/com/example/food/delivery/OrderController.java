@@ -1,14 +1,13 @@
 package com.example.food.delivery;
 
 import com.example.food.delivery.Enums.OrderStatus;
-import com.example.food.delivery.Request.OrderFilter;
-import com.example.food.delivery.Request.OrderRequest;
 import com.example.food.delivery.Request.UpdatePaymentRequest;
 import com.example.food.delivery.Response.BaseResponse;
 import com.example.food.delivery.ServiceInterface.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,23 +16,33 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    @GetMapping(value = "/getOrder")
+    @GetMapping(value = "/all")
+    @PreAuthorize("#userRole == 'ADMIN' OR #userRole == 'CO_ADMIN' OR #userRole == 'SUPER_ADMIN'")
     public ResponseEntity<BaseResponse<?>> getAllOrders(@RequestParam(defaultValue = "0") int page){
         return orderService.getAllOrders(page);
     }
 
-    @GetMapping(value = "/ordersByCustomer")
-    public ResponseEntity<BaseResponse<?>> getOrdersByCustomer(@RequestParam(defaultValue = "0") int page, String customerEmail){
-        return orderService.getOrdersByCustId(page, customerEmail);
+    @GetMapping(value = "/customer")
+    @PreAuthorize("#userRole == 'CUSTOMER'")
+    public ResponseEntity<BaseResponse<?>> getOrdersByCustomer(@RequestParam(defaultValue = "0") int page,
+                                                               @RequestHeader("userEmail") String userEmail,
+                                                               @RequestHeader("userRole") String userRole){
+        return orderService.getOrdersByCustId(page, userEmail);
     }
 
-    @GetMapping(value = "/filterByStatus")
-    public ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(@RequestParam(defaultValue = "0") int page, OrderFilter orderFilter){
-        return orderService.getFilteredOrdersByCustId(page, orderFilter);
+    @GetMapping(value = "/filter")
+    @PreAuthorize("#userRole == 'CUSTOMER'")
+    public ResponseEntity<BaseResponse<?>> getFilteredOrdersByCustId(@RequestParam(defaultValue = "0") int page, OrderStatus orderStatus,
+                                                                     @RequestHeader("userEmail") String userEmail,
+                                                                     @RequestHeader("userRole") String userRole){
+        return orderService.getFilteredOrdersByCustId(page, orderStatus, userEmail);
     }
 
-    @GetMapping(value = "/all/filterByStatus")
-    public ResponseEntity<BaseResponse<?>> getFilteredOrders(@RequestParam(defaultValue = "0") int page, OrderStatus orderStatus){
+    @GetMapping(value = "/all/filter")
+    @PreAuthorize("#userRole == 'ADMIN' OR #userRole == 'CO_ADMIN' OR #userRole == 'SUPER_ADMIN'")
+    public ResponseEntity<BaseResponse<?>> getFilteredOrders(@RequestParam(defaultValue = "0") int page, OrderStatus orderStatus,
+                                                             @RequestHeader("userEmail") String userEmail,
+                                                             @RequestHeader("userRole") String userRole){
         return orderService.getFilteredOrders(page, orderStatus);
     }
 
