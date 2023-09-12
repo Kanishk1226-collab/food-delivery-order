@@ -14,6 +14,7 @@ public class CollectionConstants {
     public static final String MENU_ITEM = "menu_item";
     public static final String QUANTITY = "quantity";
     public static final String PRICE = "price";
+    public static final String RATING = "rating";
 
     //CUSTOMER DETAIL LIST
     public static final String CUSTOMER_DETAIL_LIST = "customerDetail";

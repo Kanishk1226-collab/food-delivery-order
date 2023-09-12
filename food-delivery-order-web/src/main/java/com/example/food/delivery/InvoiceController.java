@@ -48,7 +48,7 @@ public class InvoiceController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
 
-        String invoiceFileName = "order-" + orderId;
+        String invoiceFileName = "Order-Id-" + orderId;
         headers.setContentDispositionFormData("attachment", invoiceFileName);
 
         return new ResponseEntity<>(outputStream.toByteArray(), headers, HttpStatus.OK);

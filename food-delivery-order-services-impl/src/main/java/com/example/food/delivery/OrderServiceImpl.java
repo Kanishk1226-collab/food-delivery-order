@@ -106,24 +106,24 @@ public class OrderServiceImpl implements OrderService {
         return ResponseEntity.ok(response);
     }
 
-        public void isValidEmail(String email) {
-            String regex = "^(.+)@(.+)$";
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(email);
-            if(!matcher.matches()) {
-                throw new OrderManagementExceptions.InvalidInputException("Enter valid Customer Email");
-            }
-            String url = "http://localhost:8081/user-service/customer/isCustomerLoggedIn?customerEmail=" + email;
-            BaseResponse<?> getCustomerAvail;
-            ResponseEntity<BaseResponse<?>> responseEntity3 =
-                    restTemplate.exchange(url, HttpMethod.GET, null,
-                            new ParameterizedTypeReference<BaseResponse<?>>() {});
-            if (responseEntity3.getStatusCode().is2xxSuccessful()) {
-                getCustomerAvail = responseEntity3.getBody();
-                if (!getCustomerAvail.isSuccess()) {
-                    throw new OrderManagementExceptions.RestTemplateException(getCustomerAvail.getError());
-                }
-            }
-        }
+//        public void isValidEmail(String email) {
+//            String regex = "^(.+)@(.+)$";
+//            Pattern pattern = Pattern.compile(regex);
+//            Matcher matcher = pattern.matcher(email);
+//            if(!matcher.matches()) {
+//                throw new OrderManagementExceptions.InvalidInputException("Enter valid Customer Email");
+//            }
+//            String url = "http://localhost:8081/user-service/customer/isCustomerLoggedIn?customerEmail=" + email;
+//            BaseResponse<?> getCustomerAvail;
+//            ResponseEntity<BaseResponse<?>> responseEntity3 =
+//                    restTemplate.exchange(url, HttpMethod.GET, null,
+//                            new ParameterizedTypeReference<BaseResponse<?>>() {});
+//            if (responseEntity3.getStatusCode().is2xxSuccessful()) {
+//                getCustomerAvail = responseEntity3.getBody();
+//                if (!getCustomerAvail.isSuccess()) {
+//                    throw new OrderManagementExceptions.RestTemplateException(getCustomerAvail.getError());
+//                }
+//            }
+//        }
 
 }

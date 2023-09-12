@@ -572,3 +572,24 @@ margin-left: 150px;
         font-weight: bold;
         /* Additional styling properties for h1, if needed */
     }
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('http://localhost:8083/order-service/static/Montserrat-Regular.ttf') format('truetype');
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('http://localhost:8083/order-service/static/Montserrat-Bold.ttf') format('truetype');
+    font-weight: bold;
+}
+
+.montserrat-text {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    h1.montserrat-text {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: bold;
+    }
